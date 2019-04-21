@@ -1,0 +1,27 @@
+{
+  "name": "dat-shared-files",
+  "version": "0.0.1",
+  "description": "Share and track locally shared files as dat links",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/arj03/dat-shared-files.git"
+  },
+  "keywords": [
+    "dat",
+    "files"
+  ],
+  "author": "Anders Rune Jensen <arj03@protonmail.ch>",
+  "license": "Freebeer",
+  "bugs": {
+    "url": "https://github.com/arj03/dat-shared-files/issues"
+  },
+  "homepage": "https://github.com/arj03/dat-shared-files",
+  "dependencies": {
+    "dat-node": "^3.5.15",
+    "commander": "^2.20.0"
+  }
+}
