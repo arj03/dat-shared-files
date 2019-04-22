@@ -1,7 +1,7 @@
 {
   "name": "dat-shared-files",
   "version": "0.0.1",
-  "description": "Share and track locally shared files as dat links",
+  "description": "Seed and track locally shared files as dat links",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
