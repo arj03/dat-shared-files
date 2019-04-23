@@ -1,11 +1,3 @@
-/*
-  - Add file:
-   - Create dir + symlink i .dat-files/
-   - Generate link
- - Lookup link -> get file path
- - Get all entries files + links
-*/
-
 var lib = require('./lib.js')
 
 var program = require('commander')

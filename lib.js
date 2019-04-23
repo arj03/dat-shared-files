@@ -103,7 +103,8 @@ module.exports = {
       fs.writeFileSync(jsonDbFile, JSON.stringify(db))
     }
 
-    cb()
+    if (cb)
+      cb()
   },
   shareFiles: function(cb) {
     ensureDbLoaded()
