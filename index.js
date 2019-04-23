@@ -3,6 +3,7 @@ var lib = require('./lib.js')
 var program = require('commander')
 
 program
+  .version(require('./package.json').version, '-v, --version')
   .option('-f, --file [path]', 'Share a file, returning the generated dat link')
   .option('-d, --dat-link [link]', 'Look up dat link and return local path if shared')
   .option('-l, --list-links', 'List all links in database')

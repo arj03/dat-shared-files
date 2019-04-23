@@ -15,6 +15,9 @@ Secondly once you have shared a dat link, there is no registry that
 easily keeps track of your shared files. This is the second purpose of
 this module.
 
+The database and symlinks are stored in the ~/.dat-shared-files/
+folder.
+
 The main purpose of this module is to make it easier to integrate
 [dat](https://datproject.org/) with
 [ssb](https://www.scuttlebutt.nz/).
