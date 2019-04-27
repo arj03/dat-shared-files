@@ -8,8 +8,13 @@ files. While it is possible to create ignore lists, it is not easy to
 use the same folders to share different files as different dat
 links. See this
 [issue](https://github.com/datproject/dat-node/issues/222) for a bit
-more background. This modules solved the problem by symlinking files
-into folders.
+more background.
+
+This modules solved the problem by symlinking files into folders. In
+this way the files are only stored once, but this also means that if
+you intend to share the files for a longer period of time, it is
+probably best to move them somewhere where they will not be deleted so
+easily.
 
 Secondly once you have shared a dat link, there is no registry that
 easily keeps track of your shared files. This is the second purpose of
