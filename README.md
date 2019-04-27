@@ -27,8 +27,7 @@ The main purpose of this module is to make it easier to integrate
 ```js
 var datSharedFiles = require('dat-shared-files/lib')
 
-// file Object from <input type='file'>
-var datSharedFiles.shareFile(file, (datLink) => {
+var datSharedFiles.shareFile(filePath, (datLink) => {
   console.log('new dat:', datLink)
 })
 ```
@@ -37,26 +36,29 @@ var datSharedFiles.shareFile(file, (datLink) => {
 
 ### `shareFile(file, cb)`
 
-Takes a file and creates a dat, adds it to local db of dats being shared, and calls back with the datLink.
+Takes a filepath and creates a dat, adds it to local db of dats being
+shared, and calls back with the datLink.
 
 ### `shareFiles(cb)`
 
-Reads the list of all DATs made by this module, and starts sharing them all.
-Calls back with an Array of all datLinks currently registered.
+Reads the list of all DATs made by this module, and starts sharing
+them all.  Calls back with an Array of all datLinks currently
+registered.
 
 ### `listLinks(cb)`
 
-Calls back with an Array of all datLinks currently registered.
+Calls back with an array of all datLinks currently registered.
 
 ### `datLink(datLink, cb)`
 
-Calls back with the path to where the files for the named DAT are currently stored,
-OR `''` if there aren't currently any
+Calls back with the path to where the files for the named DAT are
+currently stored, OR `''` if there aren't currently any
 
 ### `removeLink(datLink, cb)`
 
-Removes the DAT from the database, meaning this DAT will not be included in functionality like e.g. `datShareFiles`.
-Callback is a function which is given no arguments but is run when done.
+Removes the DAT from the database, meaning this DAT will not be
+included in functionality like e.g. `datShareFiles`.  Callback is a
+function which is given no arguments but is run when done.
 
 ## CLI
 
