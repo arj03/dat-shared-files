@@ -1,6 +1,6 @@
 {
   "name": "dat-shared-files",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Seed and track locally shared files as dat links",
   "main": "index.js",
   "bin": {
