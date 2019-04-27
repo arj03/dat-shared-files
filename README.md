@@ -73,4 +73,4 @@ functionality is available from the command line (see -h).
 ## See also
 
 [ssb-dat-autoshare](https://github.com/arj03/ssb-dat-autoshare) for
-more integration between these two projects.
+more integration between dat and ssb.
