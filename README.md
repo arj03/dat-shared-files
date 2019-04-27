@@ -62,9 +62,8 @@ function which is given no arguments but is run when done.
 
 ## CLI
 
-TODO
-
-_when installed globally, perhaps this module can be used as a command line tool?!_
+Can also be installed globally as `dat-shared-files`, where the above
+functionality is available from the command line (see -h).
 
 ## See also
 

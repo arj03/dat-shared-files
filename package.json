@@ -3,6 +3,9 @@
   "version": "0.0.2",
   "description": "Seed and track locally shared files as dat links",
   "main": "index.js",
+  "bin": {
+    "dat-shared-files": "./index.js"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
