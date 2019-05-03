@@ -15,29 +15,35 @@ program
 
 if (program.file)
 {
-  lib.shareFile(program.file, (datLink) => {
-    console.log(datLink)
+  lib.shareFile(program.file, (err, datLink) => {
+    if (err) console.error(err)
+    else console.log(datLink)
   })
 }
 else if (program.datLink)
 {
-  lib.datLink(program.datLink, (path) => {
-    console.log(path)
+  lib.datLink(program.datLink, (err, path) => {
+    if (err) console.error(err)
+    else console.log(path)
   })
 }
 else if (program.removeLink)
 {
-  lib.removeLink(program.removeLink)
+  lib.removeLink(program.removeLink, (err) => {
+    if (err) console.error(err)
+  })
 }
 else if (program.listLinks)
 {
-  lib.listLinks((links) => {
-    links.forEach(link => console.log(link))
+  lib.listLinks((err, links) => {
+    if (err) console.error(err)
+    else links.forEach(link => console.log(link))
   })
 }
 else if (program.shareFiles)
 {
-  lib.shareFiles(links => {
-    links.forEach(link => console.log('Sharing: ' + link))
+  lib.shareFiles((err, links) => {
+    if (err) console.error(err)
+    else links.forEach(link => console.log('Sharing: ' + link))
   })
 }

@@ -7,75 +7,78 @@ const datFilesDir = path.join(os.homedir(), '.dat-shared-files')
 const symlinksDir = path.join(datFilesDir, 'symlinks')
 const jsonDbFile = path.join(datFilesDir, 'db.json')
 
-let db = null
-
 function ensureDirExists(dir, cb) {
-  if (!fs.existsSync(dir)) {
-    fs.mkdir(dir, function(err){
-      if (err) throw err;
-
-      cb()
-    })
-  }
-  else
-    cb()
+  fs.access(dir, fs.constants.F_OK, (err) => {
+    if (err) fs.mkdir(dir, cb) // does not exist
+    else cb()
+  })
 }
 
 function datShareFiles(path, cb) {
   Dat(path, function (err, dat) {
-    if (err) throw err
+    if (err) return cb(err)
     
     var importer = dat.importFiles()
     
     importer.on('end', function() {
       dat.joinNetwork()
 
-      cb('dat://' + dat.key.toString('hex'))
+      cb(null, 'dat://' + dat.key.toString('hex'))
     })
   })
 }
 
-function ensureDbLoaded() {
-  if (db === null) {
-    if (fs.existsSync(jsonDbFile)) {
-      db = JSON.parse(fs.readFileSync(jsonDbFile))
-    }
-    else
-      db = {}
-  }
+function loadDb(cb) {
+  fs.access(jsonDbFile, fs.constants.R_OK, (err) => {
+    if (err) return cb(null, {}) // does not exist
+
+    fs.readFile(jsonDbFile, (err, data) => {
+      if (err) return cb(err)
+
+      cb(null, JSON.parse(data))
+    })
+  })
 }
 
-function addLinkToDb(existingPath, symlinkDir, datLink, cb) {
-  ensureDbLoaded()
-
+function addLinkToDb(db, existingPath, symlinkDir, datLink, cb) {
   db[datLink] = {existingPath, symlinkDir}
-  fs.writeFileSync(jsonDbFile, JSON.stringify(db))
-  cb(datLink)
+  fs.writeFile(jsonDbFile, JSON.stringify(db), (err) => {
+    if (err) return cb(err)
+    else cb(null, datLink)
+  })
 }
 
 module.exports = {
   shareFile: function(file, cb) {
     file = path.resolve(file)
 
-    ensureDbLoaded()
+    loadDb((err, db) => {
+      if (err) return cb(err)
 
-    for (var datLink in db) {
-      if (db[datLink].existingPath == file)
-        return datShareFiles(db[datLink].symlinkDir, cb)
-    }
+      for (var datLink in db) {
+        if (db[datLink].existingPath == file)
+          return datShareFiles(db[datLink].symlinkDir, cb)
+      }
 
-    // else
-    ensureDirExists(datFilesDir, () => {
-      ensureDirExists(symlinksDir, () => {
-        let symlinkDir = path.join(symlinksDir, Date.now().toString())
-        fs.mkdir(symlinkDir, function(err) {
-          if (err) throw err;
+      // else
+      ensureDirExists(datFilesDir, (err) => {
+        if (err) return cb(err)
 
-          fs.symlink(file, path.join(symlinkDir, path.basename(file)), function(err) {
-            if (err) throw err;
+        ensureDirExists(symlinksDir, (err) => {
+          if (err) return cb(err)
 
-            datShareFiles(symlinkDir, (datLink) => {
-              addLinkToDb(file, symlinkDir, datLink, cb)
+          let symlinkDir = path.join(symlinksDir, Date.now().toString())
+          fs.mkdir(symlinkDir, function(err) {
+            if (err) return cb(err)
+
+            fs.symlink(file, path.join(symlinkDir, path.basename(file)), function(err) {
+              if (err) return cb(err)
+
+              datShareFiles(symlinkDir, (err, datLink) => {
+                if (err) return cb(err)
+
+                addLinkToDb(db, file, symlinkDir, datLink, cb)
+              })
             })
           })
         })
@@ -83,37 +86,45 @@ module.exports = {
     })
   },
   datLink: function(datLink, cb) {
-    ensureDbLoaded()
+    loadDb((err, db) => {
+      if (err) return cb(err)
 
-    if (db[datLink])
-      cb(db[datLink].existingPath)
-    else
-      cb('')
+      if (db[datLink])
+        cb(null, db[datLink].existingPath)
+      else
+        cb('Link not found in db')
+    })
   },
   listLinks: function(cb) {
-    ensureDbLoaded()
+    loadDb((err, db) => {
+      if (err) return cb(err)
 
-    cb(Object.keys(db))
+      cb(null, Object.keys(db))
+    })
   },
   removeLink: function(datLink, cb) {
-    ensureDbLoaded()
+    loadDb((err, db) => {
+      if (err) return cb(err)
 
-    if (db[datLink]) {
-      delete db[datLink]
-      fs.writeFileSync(jsonDbFile, JSON.stringify(db))
-    }
-
-    if (cb)
-      cb()
+      if (db[datLink]) {
+        delete db[datLink]
+        fs.writeFile(jsonDbFile, JSON.stringify(db), cb)
+      } else
+        cb()
+    })
   },
   shareFiles: function(cb) {
-    ensureDbLoaded()
+    loadDb((err, db) => {
+      if (err) return cb(err)
 
-    for (var datLink in db) {
-      datShareFiles(db[datLink].symlinkDir, () => {})
-    }
+      var countdown = Object.keys(db).length
 
-    if (cb)
-      cb(Object.keys(db))
+      for (var datLink in db) {
+        datShareFiles(db[datLink].symlinkDir, (err) => {
+          if (--countdown == 0)
+            cb(null, Object.keys(db))
+        })
+      }
+    })
   }
 }
