@@ -85,6 +85,44 @@ module.exports = {
       })
     })
   },
+  shareFiles: function(files, cb) {
+    loadDb((err, db) => {
+      if (err) return cb(err)
+
+      files = files.map(file => path.resolve(file))
+
+      for (var datLink in db) {
+        if (JSON.stringify(db[datLink].existingPath) === JSON.stringify(files))
+          return datShareFiles(db[datLink].symlinkDir, cb)
+      }
+
+      // else
+      ensureDirExists(datFilesDir, (err) => {
+        if (err) return cb(err)
+
+        ensureDirExists(symlinksDir, (err) => {
+          if (err) return cb(err)
+
+          let symlinkDir = path.join(symlinksDir, Date.now().toString())
+          fs.mkdir(symlinkDir, function(err) {
+            if (err) return cb(err)
+
+            files.forEach((file) => {
+              fs.symlink(file, path.join(symlinkDir, path.basename(file)), function(err) {
+                if (err) return cb(err)
+              })
+            })
+
+            datShareFiles(symlinkDir, (err, datLink) => {
+              if (err) return cb(err)
+
+              addLinkToDb(db, files, symlinkDir, datLink, cb)
+            })
+          })
+        })
+      })
+    })
+  },
   datLink: function(datLink, cb) {
     loadDb((err, db) => {
       if (err) return cb(err)
@@ -113,7 +151,7 @@ module.exports = {
         cb()
     })
   },
-  shareFiles: function(cb) {
+  shareAll: function(cb) {
     loadDb((err, db) => {
       if (err) return cb(err)
 

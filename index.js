@@ -6,44 +6,54 @@ var program = require('commander')
 
 program
   .version(require('./package.json').version, '-v, --version')
-  .option('-f, --file [path]', 'Share a file, returning the generated dat link')
-  .option('-d, --dat-link [link]', 'Look up dat link and return local path if shared')
-  .option('-l, --list-links', 'List all links in database')
-  .option('-r, --remove-link [link]', 'Remove a dat link from database')
-  .option('-s, --share-files', 'Share all files in database')
-  .parse(process.argv)
 
-if (program.file)
-{
-  lib.shareFile(program.file, (err, datLink) => {
-    if (err) console.error(err)
-    else console.log(datLink)
+program
+  .command('share-files [paths...]')
+  .description('Share files, returning the generated dat link')
+  .action((files) => {
+    lib.shareFiles(files, (err, datLink) => {
+      if (err) console.error(err)
+      else console.log(datLink)
+    })
   })
-}
-else if (program.datLink)
-{
-  lib.datLink(program.datLink, (err, path) => {
-    if (err) console.error(err)
-    else console.log(path)
+
+program
+  .command('dat-link [link]').
+  description('Look up dat link and return local path if shared')
+  .action((datLink) => {
+    lib.datLink(datLink, (err, path) => {
+      if (err) console.error(err)
+      else console.log(JSON.stringify(path))
+    })
   })
-}
-else if (program.removeLink)
-{
-  lib.removeLink(program.removeLink, (err) => {
-    if (err) console.error(err)
+
+program
+  .command('list-links')
+  .description('List all links in database')
+  .action(() => {
+    lib.listLinks((err, links) => {
+      if (err) console.error(err)
+      else links.forEach(link => console.log(link))
+    })
   })
-}
-else if (program.listLinks)
-{
-  lib.listLinks((err, links) => {
-    if (err) console.error(err)
-    else links.forEach(link => console.log(link))
+
+program
+  .command('remove-link [link]')
+  .description('Remove a dat link from database')
+  .action((removeLink) => {
+    lib.removeLink(removeLink, (err) => {
+      if (err) console.error(err)
+    })
   })
-}
-else if (program.shareFiles)
-{
-  lib.shareFiles((err, links) => {
-    if (err) console.error(err)
-    else links.forEach(link => console.log('Sharing: ' + link))
+
+program
+  .command('share-all')
+  .description('Share all files in database')
+  .action(() => {
+    lib.shareAll((err, links) => {
+      if (err) console.error(err)
+      else links.forEach(link => console.log('Sharing: ' + link))
+    })
   })
-}
+
+program.parse(process.argv)
