@@ -1,59 +1,168 @@
-#! /usr/bin/env node
+const fs = require('fs')
+const os = require('os')
+const path = require('path')
+const Dat = require('dat-node')
 
-var lib = require('./lib.js')
+const datFilesDir = path.join(os.homedir(), '.dat-shared-files')
+const symlinksDir = path.join(datFilesDir, 'symlinks')
+const jsonDbFile = path.join(datFilesDir, 'db.json')
 
-var program = require('commander')
+function ensureDirExists(dir, cb) {
+  fs.access(dir, fs.constants.F_OK, (err) => {
+    if (err) fs.mkdir(dir, cb) // does not exist
+    else cb()
+  })
+}
 
-program
-  .version(require('./package.json').version, '-v, --version')
+function datShareFiles(path, cb) {
+  Dat(path, function (err, dat) {
+    if (err) return cb(err)
+    
+    var importer = dat.importFiles()
+    
+    importer.on('end', function() {
+      dat.joinNetwork()
 
-program
-  .command('share-files [paths...]')
-  .description('Share files, returning the generated dat link')
-  .action((files) => {
-    lib.shareFiles(files, (err, datLink) => {
-      if (err) console.error(err)
-      else console.log(datLink)
+      cb(null, 'dat://' + dat.key.toString('hex'))
     })
   })
+}
 
-program
-  .command('dat-link [link]').
-  description('Look up dat link and return local path if shared')
-  .action((datLink) => {
-    lib.datLink(datLink, (err, path) => {
-      if (err) console.error(err)
-      else console.log(JSON.stringify(path))
+function loadDb(cb) {
+  fs.access(jsonDbFile, fs.constants.R_OK, (err) => {
+    if (err) return cb(null, {}) // does not exist
+
+    fs.readFile(jsonDbFile, (err, data) => {
+      if (err) return cb(err)
+
+      cb(null, JSON.parse(data))
     })
   })
+}
 
-program
-  .command('list-links')
-  .description('List all links in database')
-  .action(() => {
-    lib.listLinks((err, links) => {
-      if (err) console.error(err)
-      else links.forEach(link => console.log(link))
-    })
+function addLinkToDb(db, existingPath, symlinkDir, datLink, cb) {
+  db[datLink] = {existingPath, symlinkDir}
+  fs.writeFile(jsonDbFile, JSON.stringify(db), (err) => {
+    if (err) return cb(err)
+    else cb(null, datLink)
   })
+}
 
-program
-  .command('remove-link [link]')
-  .description('Remove a dat link from database')
-  .action((removeLink) => {
-    lib.removeLink(removeLink, (err) => {
-      if (err) console.error(err)
+module.exports = {
+  shareFile: function(file, cb) {
+    file = path.resolve(file)
+
+    loadDb((err, db) => {
+      if (err) return cb(err)
+
+      for (var datLink in db) {
+        if (db[datLink].existingPath == file)
+          return datShareFiles(db[datLink].symlinkDir, cb)
+      }
+
+      // else
+      ensureDirExists(datFilesDir, (err) => {
+        if (err) return cb(err)
+
+        ensureDirExists(symlinksDir, (err) => {
+          if (err) return cb(err)
+
+          let symlinkDir = path.join(symlinksDir, Date.now().toString())
+          fs.mkdir(symlinkDir, function(err) {
+            if (err) return cb(err)
+
+            fs.symlink(file, path.join(symlinkDir, path.basename(file)), function(err) {
+              if (err) return cb(err)
+
+              datShareFiles(symlinkDir, (err, datLink) => {
+                if (err) return cb(err)
+
+                addLinkToDb(db, file, symlinkDir, datLink, cb)
+              })
+            })
+          })
+        })
+      })
     })
-  })
+  },
+  shareFiles: function(files, cb) {
+    loadDb((err, db) => {
+      if (err) return cb(err)
 
-program
-  .command('share-all')
-  .description('Share all files in database')
-  .action(() => {
-    lib.shareAll((err, links) => {
-      if (err) console.error(err)
-      else links.forEach(link => console.log('Sharing: ' + link))
+      files = files.map(file => path.resolve(file))
+
+      for (var datLink in db) {
+        if (JSON.stringify(db[datLink].existingPath) === JSON.stringify(files))
+          return datShareFiles(db[datLink].symlinkDir, cb)
+      }
+
+      // else
+      ensureDirExists(datFilesDir, (err) => {
+        if (err) return cb(err)
+
+        ensureDirExists(symlinksDir, (err) => {
+          if (err) return cb(err)
+
+          let symlinkDir = path.join(symlinksDir, Date.now().toString())
+          fs.mkdir(symlinkDir, function(err) {
+            if (err) return cb(err)
+
+            files.forEach((file) => {
+              fs.symlink(file, path.join(symlinkDir, path.basename(file)), function(err) {
+                if (err) return cb(err)
+              })
+            })
+
+            datShareFiles(symlinkDir, (err, datLink) => {
+              if (err) return cb(err)
+
+              addLinkToDb(db, files, symlinkDir, datLink, cb)
+            })
+          })
+        })
+      })
     })
-  })
+  },
+  datLink: function(datLink, cb) {
+    loadDb((err, db) => {
+      if (err) return cb(err)
 
-program.parse(process.argv)
+      if (db[datLink])
+        cb(null, db[datLink].existingPath)
+      else
+        cb('Link not found in db')
+    })
+  },
+  listLinks: function(cb) {
+    loadDb((err, db) => {
+      if (err) return cb(err)
+
+      cb(null, Object.keys(db))
+    })
+  },
+  removeLink: function(datLink, cb) {
+    loadDb((err, db) => {
+      if (err) return cb(err)
+
+      if (db[datLink]) {
+        delete db[datLink]
+        fs.writeFile(jsonDbFile, JSON.stringify(db), cb)
+      } else
+        cb()
+    })
+  },
+  shareAll: function(cb) {
+    loadDb((err, db) => {
+      if (err) return cb(err)
+
+      var countdown = Object.keys(db).length
+
+      for (var datLink in db) {
+        datShareFiles(db[datLink].symlinkDir, (err) => {
+          if (--countdown == 0)
+            cb(null, Object.keys(db))
+        })
+      }
+    })
+  }
+}

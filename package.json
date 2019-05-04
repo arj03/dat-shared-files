@@ -4,7 +4,7 @@
   "description": "Seed and track locally shared files as dat links",
   "main": "index.js",
   "bin": {
-    "dat-shared-files": "./index.js"
+    "dat-shared-files": "./bin.js"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"

@@ -30,7 +30,7 @@ The main purpose of this module is to make it easier to integrate
 ## Example usage
 
 ```js
-var datSharedFiles = require('dat-shared-files/lib')
+var datSharedFiles = require('dat-shared-files')
 
 datSharedFiles.shareFile(filePath, (err, datLink) => {
   if (err) console.error(err)
