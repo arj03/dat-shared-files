@@ -45,7 +45,13 @@ datSharedFiles.shareFile(filePath, (err, datLink) => {
 Takes a filepath and creates a dat, adds it to local db of dats being
 shared, and calls back with err or the dat link as second argument.
 
-### `shareFiles(cb)`
+### `shareFiles(files, cb)`
+
+Takes a list of filepaths and creates a dat, adds it to local db of
+dats being shared, and calls back with err or the dat link as second
+argument.
+
+### `shareAll(cb)`
 
 Reads the list of all DATs made by this module, and starts sharing
 them all. Calls back with err or an array of all dat links currently
